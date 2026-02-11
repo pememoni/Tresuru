@@ -232,7 +232,7 @@ export default function LandingPage() {
                   Confidential Transactions
                 </h3>
                 <p className="text-[14px] text-white/35 leading-relaxed max-w-2xl">
-                  V3 will introduce encrypted transactions using Tempo&apos;s confidential transfer protocol.
+                  V3 will introduce encrypted transactions using Fairblock&apos;s confidential transfer protocol.
                   Balances and transfer amounts will be hidden on-chain while remaining fully auditable
                   by authorized parties — giving enterprises the privacy they need without sacrificing compliance.
                 </p>
@@ -248,8 +248,8 @@ export default function LandingPage() {
                   </div>
                   <div className="w-px h-3 bg-white/10" />
                   <div className="flex items-center gap-2 text-xs text-white/25">
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>Zero-knowledge compliance proofs</span>
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Powered by Fairblock</span>
                   </div>
                 </div>
               </div>
