@@ -22,7 +22,7 @@ const FEATURES = [
     icon: Wallet,
     title: "Multi-Account Treasury",
     description:
-      "Manage operating, reserve, payroll, and investment accounts, all denominated in trUSD on Tempo.",
+      "Manage operating, reserve, payroll, and investment accounts, all unified on one platform.",
   },
   {
     icon: Users,
@@ -123,8 +123,8 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg text-white/35 mt-7 max-w-lg mx-auto leading-relaxed">
-            Multi-sig approvals, real-time trUSD settlement, and native
-            on-chain reconciliation on Tempo Network.
+            Multi-sig approvals, real-time stablecoin settlement, and
+            native reconciliation built for enterprise.
           </p>
 
           <div className="flex items-center justify-center gap-3 mt-10">
@@ -263,7 +263,7 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-white tracking-tight">Ready to Explore?</h2>
           <p className="text-sm text-white/30 mt-3">
             Connect your wallet or sign in with email to access the full treasury dashboard.
-            Running on Tempo Moderato Testnet with trUSD.
+            Running on Tempo Moderato Testnet.
           </p>
           <div className="flex items-center justify-center gap-3 mt-8">
             <Button onClick={login} disabled={!ready} size="lg">
