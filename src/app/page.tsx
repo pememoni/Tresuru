@@ -13,6 +13,8 @@ import {
   BarChart3,
   FileText,
   Wallet,
+  Lock,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LogoMark, LogoFull } from "@/components/ui/Logo";
@@ -208,6 +210,50 @@ export default function LandingPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* V3 Teaser */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl border border-violet-500/15 bg-gradient-to-br from-violet-500/[0.04] via-indigo-500/[0.02] to-transparent p-8 md:p-10">
+            <div className="absolute top-4 right-4">
+              <span className="text-[10px] font-mono text-violet-300/50 bg-violet-500/10 px-3 py-1 rounded-full border border-violet-400/15">
+                V3 ROADMAP
+              </span>
+            </div>
+            <div className="flex items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-6 h-6 text-violet-400/80" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Confidential Transactions
+                </h3>
+                <p className="text-[14px] text-white/35 leading-relaxed max-w-2xl">
+                  V3 will introduce encrypted transactions using Tempo&apos;s confidential transfer protocol.
+                  Balances and transfer amounts will be hidden on-chain while remaining fully auditable
+                  by authorized parties — giving enterprises the privacy they need without sacrificing compliance.
+                </p>
+                <div className="flex items-center gap-4 mt-5">
+                  <div className="flex items-center gap-2 text-xs text-white/25">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Encrypted amounts &amp; balances</span>
+                  </div>
+                  <div className="w-px h-3 bg-white/10" />
+                  <div className="flex items-center gap-2 text-xs text-white/25">
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>Selective disclosure for auditors</span>
+                  </div>
+                  <div className="w-px h-3 bg-white/10" />
+                  <div className="flex items-center gap-2 text-xs text-white/25">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Zero-knowledge compliance proofs</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
