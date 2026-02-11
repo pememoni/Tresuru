@@ -122,10 +122,9 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          <p className="text-lg text-white/35 mt-7 max-w-xl mx-auto leading-relaxed">
-            Enterprise-grade treasury management on Tempo Network.
-            Multi-sig approvals, real-time settlement, and native reconciliation
-            powered by trUSD.
+          <p className="text-lg text-white/35 mt-7 max-w-lg mx-auto leading-relaxed">
+            Multi-sig approvals, real-time trUSD settlement, and native
+            on-chain reconciliation on Tempo Network.
           </p>
 
           <div className="flex items-center justify-center gap-3 mt-10">
