@@ -7,10 +7,11 @@ import TreasuryChart from "@/components/dashboard/TreasuryChart";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Shield, Zap, Clock, CheckCircle2, Wifi } from "lucide-react";
-import { isLiveMode } from "@/lib/contracts";
+import { useTreasury } from "@/hooks/useTreasury";
 
 export default function DashboardPage() {
-  const live = isLiveMode();
+  const { isDemo, isLive } = useTreasury();
+  const live = isLive;
 
   return (
     <div className="space-y-6 max-w-[1400px]">

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LogoMark, LogoFull } from "@/components/ui/Logo";
+import { useTreasuryStore } from "@/store/treasury";
 
 const FEATURES = [
   {
@@ -135,7 +136,10 @@ export default function LandingPage() {
             <Button
               variant="secondary"
               size="lg"
-              onClick={() => router.push("/dashboard")}
+              onClick={() => {
+                useTreasuryStore.getState().setDemoSession(true);
+                router.push("/dashboard");
+              }}
             >
               View Demo
             </Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useTreasuryStore, type Transaction } from "@/store/treasury";
+import { useTreasuryStore, LIVE_ACCOUNTS, type Transaction } from "@/store/treasury";
 import { isLiveMode, TREASURY_ADDRESS, TOKEN_ADDRESS } from "@/lib/contracts";
 import {
   usePropose,
@@ -18,13 +18,15 @@ import {
 import { useAccount } from "wagmi";
 
 /**
- * Unified treasury hook. Returns the same interface regardless of mode:
- * - Demo mode: reads/writes from Zustand store (existing behavior)
- * - Live mode: reads from chain, writes call smart contracts, then syncs to Zustand
+ * Unified treasury hook.
+ * - Demo session: shows sample data for showcasing the product
+ * - Live mode (wallet connected): reads from chain, writes call smart contracts
  */
 export function useTreasury() {
   const store = useTreasuryStore();
   const live = isLiveMode();
+  const demo = store.demoSession;
+  const showDemo = demo || !live;
   const { address } = useAccount();
 
   // ─── Live mode hooks (no-op when not live) ──────────────────────────
@@ -51,7 +53,7 @@ export function useTreasury() {
       fromAccount: string;
       toLabel?: string;
     }) => {
-      if (live) {
+      if (live && !demo) {
         await propose(
           params.to as `0x${string}`,
           params.amount,
@@ -59,7 +61,6 @@ export function useTreasury() {
           params.description
         );
       }
-      // Always update local store for immediate UI feedback
       store.addTransaction({
         type: "outbound",
         status: "pending_approval",
@@ -72,75 +73,76 @@ export function useTreasury() {
         memo: params.memo,
         description: params.description,
         createdBy: store.currentUser?.name || "Unknown",
-        requiredApprovals: live && threshold ? Number(threshold) : 2,
+        requiredApprovals: live && !demo && threshold ? Number(threshold) : 2,
       });
     },
-    [live, propose, store, threshold]
+    [live, demo, propose, store, threshold]
   );
 
   const approveTransaction = useCallback(
     async (txId: string, onChainId?: bigint) => {
-      if (live && onChainId !== undefined) {
+      if (live && !demo && onChainId !== undefined) {
         await approveTx(onChainId);
       }
       store.approveTransaction(txId, store.currentUser?.name || "Unknown");
     },
-    [live, approveTx, store]
+    [live, demo, approveTx, store]
   );
 
   const rejectTransaction = useCallback(
     async (txId: string, comment: string, onChainId?: bigint) => {
-      if (live && onChainId !== undefined) {
+      if (live && !demo && onChainId !== undefined) {
         await rejectTx(onChainId, comment);
       }
       store.rejectTransaction(txId, store.currentUser?.name || "Unknown", comment);
     },
-    [live, rejectTx, store]
+    [live, demo, rejectTx, store]
   );
 
   const executeTransaction = useCallback(
     async (onChainId: bigint) => {
-      if (live) {
+      if (live && !demo) {
         await executeTx(onChainId);
       }
     },
-    [live, executeTx]
+    [live, demo, executeTx]
   );
 
   // ─── Compute live-mode data ────────────────────────────────────────
 
   const liveBalance = live && onChainBalance !== undefined ? fromWei(onChainBalance) : 0;
 
-  const liveAccounts = live
-    ? store.accounts.map((a) =>
-        a.id === "acc-treasury" ? { ...a, balance: liveBalance } : a
-      )
-    : store.accounts;
+  const liveAccountsWithBalance = LIVE_ACCOUNTS.map((a) =>
+    a.id === "acc-treasury" ? { ...a, balance: liveBalance } : a
+  );
 
   // ─── Return unified interface ───────────────────────────────────────
 
   return {
     // Mode
-    isLive: live,
-    isSigner: live ? !!callerIsSigner : true,
+    isLive: live && !demo,
+    isDemo: showDemo,
+    isSigner: live && !demo ? !!callerIsSigner : true,
 
-    // State (live overrides demo where available)
-    treasuryBalance: live ? liveBalance : store.totalBalance(),
-    transactionCount: live && txCount !== undefined
-      ? Number(txCount)
-      : store.transactions.length,
-    signers: live && signers ? signers : store.team.map((m) => m.address as `0x${string}`),
-    requiredApprovals: live && threshold ? Number(threshold) : 2,
+    // State — demo shows sample data, live shows on-chain data
+    treasuryBalance: showDemo ? store.totalBalance() : liveBalance,
+    transactionCount: showDemo
+      ? store.transactions.length
+      : (txCount !== undefined ? Number(txCount) : 0),
+    signers: showDemo
+      ? store.team.map((m) => m.address as `0x${string}`)
+      : (signers ?? []),
+    requiredApprovals: showDemo ? 2 : (threshold ? Number(threshold) : 1),
 
-    // Store data (live-aware)
-    accounts: liveAccounts,
-    transactions: store.transactions,
-    team: store.team,
-    policies: store.policies,
-    currentUser: store.currentUser,
-    totalBalance: live ? () => liveBalance : store.totalBalance,
-    pendingTransactions: store.pendingTransactions,
-    recentTransactions: store.recentTransactions,
+    // Store data — demo uses full store, live uses empty/on-chain
+    accounts: showDemo ? store.accounts : liveAccountsWithBalance,
+    transactions: showDemo ? store.transactions : [],
+    team: showDemo ? store.team : [],
+    policies: showDemo ? store.policies : [],
+    currentUser: showDemo ? store.currentUser : null,
+    totalBalance: showDemo ? store.totalBalance : () => liveBalance,
+    pendingTransactions: showDemo ? store.pendingTransactions : () => [],
+    recentTransactions: showDemo ? store.recentTransactions : () => [],
 
     // Actions
     proposeTransaction,
@@ -150,6 +152,7 @@ export function useTreasury() {
     setCurrentUser: store.setCurrentUser,
     addTeamMember: store.addTeamMember,
     removeTeamMember: store.removeTeamMember,
+    setDemoSession: store.setDemoSession,
 
     // Loading states
     isProposing,

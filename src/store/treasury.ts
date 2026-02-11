@@ -331,6 +331,7 @@ const DEMO_POLICIES: TreasuryPolicy[] = [
 
 interface TreasuryStore {
   // State
+  demoSession: boolean;
   team: TeamMember[];
   transactions: Transaction[];
   accounts: TreasuryAccount[];
@@ -344,6 +345,7 @@ interface TreasuryStore {
   recentTransactions: () => Transaction[];
 
   // Actions
+  setDemoSession: (demo: boolean) => void;
   setCurrentUser: (user: TeamMember | null) => void;
   addTransaction: (tx: Omit<Transaction, "id" | "createdAt" | "approvals">) => void;
   approveTransaction: (txId: string, approverName: string) => void;
@@ -352,9 +354,7 @@ interface TreasuryStore {
   removeTeamMember: (id: string) => void;
 }
 
-const _live = isLiveMode();
-
-const LIVE_ACCOUNTS: TreasuryAccount[] = [
+export const LIVE_ACCOUNTS: TreasuryAccount[] = [
   {
     id: "acc-treasury",
     name: "Treasury",
@@ -366,11 +366,12 @@ const LIVE_ACCOUNTS: TreasuryAccount[] = [
 ];
 
 export const useTreasuryStore = create<TreasuryStore>((set, get) => ({
-  team: _live ? [] : DEMO_TEAM,
-  transactions: _live ? [] : DEMO_TRANSACTIONS,
-  accounts: _live ? LIVE_ACCOUNTS : DEMO_ACCOUNTS,
-  policies: _live ? [] : DEMO_POLICIES,
-  currentUser: _live ? null : DEMO_TEAM[0],
+  demoSession: false,
+  team: DEMO_TEAM,
+  transactions: DEMO_TRANSACTIONS,
+  accounts: DEMO_ACCOUNTS,
+  policies: DEMO_POLICIES,
+  currentUser: DEMO_TEAM[0],
   isLoading: false,
 
   totalBalance: () => get().accounts.reduce((sum, acc) => sum + acc.balance, 0),
@@ -382,6 +383,8 @@ export const useTreasuryStore = create<TreasuryStore>((set, get) => ({
     [...get().transactions]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10),
+
+  setDemoSession: (demo) => set({ demoSession: demo }),
 
   setCurrentUser: (user) => set({ currentUser: user }),
 

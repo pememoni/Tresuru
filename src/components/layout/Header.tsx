@@ -1,16 +1,18 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { Bell, Search, LogOut, User, ChevronDown } from "lucide-react";
+import { Bell, Search, LogOut, User, ChevronDown, Play, X } from "lucide-react";
 import { useState } from "react";
 import { useTreasury } from "@/hooks/useTreasury";
 import { shortenAddress } from "@/lib/format";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { ready, authenticated, login, logout, user } = useAuth();
-  const { currentUser, pendingTransactions } = useTreasury();
+  const { currentUser, pendingTransactions, isDemo, setDemoSession } = useTreasury();
   const pendingCount = pendingTransactions().length;
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const router = useRouter();
 
   return (
     <header className="h-16 border-b border-white/[0.05] bg-[#0a0a0f]/80 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-30">
@@ -29,6 +31,26 @@ export default function Header() {
 
       {/* Right Section */}
       <div className="flex items-center gap-4">
+        {/* Demo Mode Badge */}
+        {isDemo && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/20">
+              <Play className="w-3 h-3 text-amber-400 fill-amber-400" />
+              <span className="text-xs font-medium text-amber-300">Demo Mode</span>
+            </div>
+            <button
+              onClick={() => {
+                setDemoSession(false);
+                if (!authenticated) router.push("/");
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-xs text-white/50 hover:text-white/80 transition-all cursor-pointer"
+            >
+              <X className="w-3 h-3" />
+              Exit Demo
+            </button>
+          </div>
+        )}
+
         {/* Notifications */}
         <button className="relative p-2 rounded-xl hover:bg-white/[0.04] transition-colors cursor-pointer">
           <Bell className="w-[18px] h-[18px] text-white/40" />
