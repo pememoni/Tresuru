@@ -6,13 +6,19 @@ import { isLiveMode, TREASURY_ADDRESS, TOKEN_ADDRESS } from "@/lib/contracts";
 import {
   usePropose,
   useApproveTx,
+  useRevokeApproval,
   useRejectTx,
   useExecuteTx,
+  useEmergencyPause,
+  useVoteUnpause,
   useTreasuryTokenBalance,
   useTransactionCount,
   useSigners,
-  useRequiredApprovals,
   useIsSigner,
+  usePaused,
+  useDailySpendRemaining,
+  useOnChainDailyLimit,
+  useTimelockDuration,
   fromWei,
 } from "./useContract";
 import { useAccount } from "wagmi";
@@ -33,13 +39,22 @@ export function useTreasury() {
   const { data: onChainBalance } = useTreasuryTokenBalance();
   const { data: txCount } = useTransactionCount();
   const { data: signers } = useSigners();
-  const { data: threshold } = useRequiredApprovals();
   const { data: callerIsSigner } = useIsSigner(address);
 
+  // V2 reads
+  const { data: isPaused } = usePaused();
+  const { data: dailyRemaining } = useDailySpendRemaining();
+  const { data: onChainDailyLimit } = useOnChainDailyLimit();
+  const { data: onChainTimelockDuration } = useTimelockDuration();
+
+  // Write hooks
   const { propose, isPending: isProposing } = usePropose();
   const { approveTx, isPending: isApproving } = useApproveTx();
+  const { revokeApproval, isPending: isRevoking } = useRevokeApproval();
   const { rejectTx, isPending: isRejecting } = useRejectTx();
   const { executeTx, isPending: isExecuting } = useExecuteTx();
+  const { emergencyPause, isPending: isPausing } = useEmergencyPause();
+  const { voteUnpause, isPending: isUnpausing } = useVoteUnpause();
 
   // ─── Unified write actions ──────────────────────────────────────────
 
@@ -73,10 +88,10 @@ export function useTreasury() {
         memo: params.memo,
         description: params.description,
         createdBy: store.currentUser?.name || "Unknown",
-        requiredApprovals: live && !demo && threshold ? Number(threshold) : 2,
+        requiredApprovals: 2,
       });
     },
-    [live, demo, propose, store, threshold]
+    [live, demo, propose, store]
   );
 
   const approveTransaction = useCallback(
@@ -87,6 +102,15 @@ export function useTreasury() {
       store.approveTransaction(txId, store.currentUser?.name || "Unknown");
     },
     [live, demo, approveTx, store]
+  );
+
+  const revokeTransactionApproval = useCallback(
+    async (txId: string, onChainId?: bigint) => {
+      if (live && !demo && onChainId !== undefined) {
+        await revokeApproval(onChainId);
+      }
+    },
+    [live, demo, revokeApproval]
   );
 
   const rejectTransaction = useCallback(
@@ -106,6 +130,24 @@ export function useTreasury() {
       }
     },
     [live, demo, executeTx]
+  );
+
+  const pauseTreasury = useCallback(
+    async () => {
+      if (live && !demo) {
+        await emergencyPause();
+      }
+    },
+    [live, demo, emergencyPause]
+  );
+
+  const unpauseTreasury = useCallback(
+    async () => {
+      if (live && !demo) {
+        await voteUnpause();
+      }
+    },
+    [live, demo, voteUnpause]
   );
 
   // ─── Compute live-mode data ────────────────────────────────────────
@@ -132,7 +174,15 @@ export function useTreasury() {
     signers: showDemo
       ? store.team.map((m) => m.address as `0x${string}`)
       : (signers ?? []),
-    requiredApprovals: showDemo ? 2 : (threshold ? Number(threshold) : 1),
+
+    // V2: On-chain governance data
+    isPaused: live && !demo ? !!isPaused : false,
+    dailySpendRemaining: live && !demo && dailyRemaining !== undefined
+      ? fromWei(dailyRemaining) : 500_000,
+    dailyLimit: live && !demo && onChainDailyLimit !== undefined
+      ? fromWei(onChainDailyLimit) : 500_000,
+    timelockDuration: live && !demo && onChainTimelockDuration !== undefined
+      ? Number(onChainTimelockDuration) : 120,
 
     // Store data — demo uses full store, live uses empty/on-chain
     accounts: showDemo ? store.accounts : liveAccountsWithBalance,
@@ -147,8 +197,11 @@ export function useTreasury() {
     // Actions
     proposeTransaction,
     approveTransaction,
+    revokeTransactionApproval,
     rejectTransaction,
     executeTransaction,
+    pauseTreasury,
+    unpauseTreasury,
     setCurrentUser: store.setCurrentUser,
     addTeamMember: store.addTeamMember,
     removeTeamMember: store.removeTeamMember,
@@ -157,9 +210,12 @@ export function useTreasury() {
     // Loading states
     isProposing,
     isApproving,
+    isRevoking,
     isRejecting,
     isExecuting,
-    isLoading: isProposing || isApproving || isRejecting || isExecuting,
+    isPausing,
+    isUnpausing,
+    isLoading: isProposing || isApproving || isRevoking || isRejecting || isExecuting || isPausing || isUnpausing,
 
     // Contract addresses (for display)
     treasuryAddress: TREASURY_ADDRESS,

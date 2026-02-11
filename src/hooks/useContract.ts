@@ -52,15 +52,6 @@ export function useSigners() {
   });
 }
 
-export function useRequiredApprovals() {
-  return useReadContract({
-    address: TREASURY_ADDRESS,
-    abi: treasuryAbi,
-    functionName: "requiredApprovals",
-    query: { enabled: isLiveMode() },
-  });
-}
-
 export function useIsSigner(address: `0x${string}` | undefined) {
   return useReadContract({
     address: TREASURY_ADDRESS,
@@ -88,6 +79,63 @@ export function useHasRejected(txId: bigint, signer: `0x${string}` | undefined) 
     functionName: "hasRejected",
     args: signer ? [txId, signer] : undefined,
     query: { enabled: isLiveMode() && !!signer },
+  });
+}
+
+// ─── V2 Reads: Thresholds, Timelock, Daily Limit, Pause ─────────────────────
+
+export function usePaused() {
+  return useReadContract({
+    address: TREASURY_ADDRESS,
+    abi: treasuryAbi,
+    functionName: "paused",
+    query: { enabled: isLiveMode() },
+  });
+}
+
+export function useDailySpendRemaining() {
+  return useReadContract({
+    address: TREASURY_ADDRESS,
+    abi: treasuryAbi,
+    functionName: "getDailySpendRemaining",
+    query: { enabled: isLiveMode() },
+  });
+}
+
+export function useOnChainDailyLimit() {
+  return useReadContract({
+    address: TREASURY_ADDRESS,
+    abi: treasuryAbi,
+    functionName: "dailyLimit",
+    query: { enabled: isLiveMode() },
+  });
+}
+
+export function useOnChainThresholds() {
+  return useReadContract({
+    address: TREASURY_ADDRESS,
+    abi: treasuryAbi,
+    functionName: "getThresholds",
+    query: { enabled: isLiveMode() },
+  });
+}
+
+export function useTimelockDuration() {
+  return useReadContract({
+    address: TREASURY_ADDRESS,
+    abi: treasuryAbi,
+    functionName: "timelockDuration",
+    query: { enabled: isLiveMode() },
+  });
+}
+
+export function useRequiredApprovalsForAmount(amount: bigint) {
+  return useReadContract({
+    address: TREASURY_ADDRESS,
+    abi: treasuryAbi,
+    functionName: "getRequiredApprovals",
+    args: [amount],
+    query: { enabled: isLiveMode() && amount > BigInt(0) },
   });
 }
 
@@ -129,6 +177,21 @@ export function useApproveTx() {
   return { approveTx, isPending, isSuccess, error };
 }
 
+export function useRevokeApproval() {
+  const { writeContractAsync, isPending, isSuccess, error } = useWriteContract();
+
+  const revokeApproval = async (txId: bigint) => {
+    return writeContractAsync({
+      address: TREASURY_ADDRESS,
+      abi: treasuryAbi,
+      functionName: "revokeApproval",
+      args: [txId],
+    });
+  };
+
+  return { revokeApproval, isPending, isSuccess, error };
+}
+
 export function useRejectTx() {
   const { writeContractAsync, isPending, isSuccess, error } = useWriteContract();
 
@@ -157,6 +220,34 @@ export function useExecuteTx() {
   };
 
   return { executeTx, isPending, isSuccess, error };
+}
+
+export function useEmergencyPause() {
+  const { writeContractAsync, isPending, isSuccess, error } = useWriteContract();
+
+  const emergencyPause = async () => {
+    return writeContractAsync({
+      address: TREASURY_ADDRESS,
+      abi: treasuryAbi,
+      functionName: "emergencyPause",
+    });
+  };
+
+  return { emergencyPause, isPending, isSuccess, error };
+}
+
+export function useVoteUnpause() {
+  const { writeContractAsync, isPending, isSuccess, error } = useWriteContract();
+
+  const voteUnpause = async () => {
+    return writeContractAsync({
+      address: TREASURY_ADDRESS,
+      abi: treasuryAbi,
+      functionName: "voteUnpause",
+    });
+  };
+
+  return { voteUnpause, isPending, isSuccess, error };
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

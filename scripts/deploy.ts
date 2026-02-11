@@ -93,16 +93,24 @@ async function main() {
   const tokenAddress = tokenReceipt.contractAddress!;
   console.log("  TresuruUSD deployed:", tokenAddress);
 
-  // 2. Deploy TresuruTreasury
-  console.log("\nDeploying TresuruTreasury...");
+  // 2. Deploy TresuruTreasury (V2 with tiered thresholds, timelock, daily limit)
+  console.log("\nDeploying TresuruTreasury V2...");
   const treasuryDeployData = encodeDeployData({
     abi: treasuryArtifact.abi,
     bytecode: treasuryArtifact.bytecode as `0x${string}`,
-    args: [[account.address], 1n],
+    args: [
+      [account.address],             // _signers
+      parseUnits("10000", 18),       // _lowThreshold: $10k
+      parseUnits("100000", 18),      // _mediumThreshold: $100k
+      parseUnits("1000000", 18),     // _highThreshold: $1M
+      120n,                          // _timelockDuration: 2 minutes (demo)
+      parseUnits("500000", 18),      // _dailyLimit: $500k
+      3600n,                         // _txExpirationPeriod: 1 hour (demo)
+    ],
   });
   const treasuryHash = await sendRawTx(account, publicClient, {
     data: treasuryDeployData,
-    gas: 5_000_000n,
+    gas: 8_000_000n,
     nonce: nonce++,
   });
   console.log("  tx:", treasuryHash);
