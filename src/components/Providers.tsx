@@ -104,7 +104,7 @@ function PrivyProviders({ children }: { children: React.ReactNode }) {
           landingHeader: `Connect to ${APP_NAME}`,
           loginMessage: "Enterprise treasury management on Tempo Network",
         },
-        loginMethods: ["email", "wallet", "google"],
+        loginMethods: ["email", "wallet"],
         defaultChain: tempoTestnet,
         supportedChains: [tempoTestnet],
         embeddedWallets: {

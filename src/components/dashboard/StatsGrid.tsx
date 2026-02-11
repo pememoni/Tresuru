@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { formatCompactUSD, formatUSD } from "@/lib/format";
 import {
   Wallet,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 export default function StatsGrid() {
-  const { accounts, transactions, pendingTransactions, totalBalance } = useTreasuryStore();
+  const { accounts, transactions, pendingTransactions, totalBalance } = useTreasury();
   const pending = pendingTransactions();
   const total = totalBalance();
 

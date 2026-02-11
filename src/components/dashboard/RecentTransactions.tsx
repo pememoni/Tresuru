@@ -2,7 +2,7 @@
 
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { formatUSD, timeAgo, shortenAddress } from "@/lib/format";
 import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -29,7 +29,7 @@ const TYPE_CONFIG = {
 };
 
 export default function RecentTransactions() {
-  const { recentTransactions } = useTreasuryStore();
+  const { recentTransactions } = useTreasury();
   const txs = recentTransactions();
 
   return (
@@ -47,6 +47,14 @@ export default function RecentTransactions() {
         </Link>
       </CardHeader>
       <div className="divide-y divide-white/[0.04]">
+        {txs.length === 0 && (
+          <div className="px-6 py-10 text-center">
+            <p className="text-sm text-white/30">No transactions yet</p>
+            <p className="text-xs text-white/20 mt-1">
+              Submit your first payment to get started
+            </p>
+          </div>
+        )}
         {txs.map((tx) => {
           const config = TYPE_CONFIG[tx.type];
           const Icon = config.icon;

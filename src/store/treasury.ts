@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Role, TransactionCategory } from "@/lib/constants";
+import { isLiveMode, TREASURY_ADDRESS } from "@/lib/contracts";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -351,12 +352,25 @@ interface TreasuryStore {
   removeTeamMember: (id: string) => void;
 }
 
+const _live = isLiveMode();
+
+const LIVE_ACCOUNTS: TreasuryAccount[] = [
+  {
+    id: "acc-treasury",
+    name: "Treasury",
+    address: TREASURY_ADDRESS || "0x",
+    balance: 0,
+    type: "operating",
+    description: "On-chain multi-sig treasury",
+  },
+];
+
 export const useTreasuryStore = create<TreasuryStore>((set, get) => ({
-  team: DEMO_TEAM,
-  transactions: DEMO_TRANSACTIONS,
-  accounts: DEMO_ACCOUNTS,
-  policies: DEMO_POLICIES,
-  currentUser: DEMO_TEAM[0],
+  team: _live ? [] : DEMO_TEAM,
+  transactions: _live ? [] : DEMO_TRANSACTIONS,
+  accounts: _live ? LIVE_ACCOUNTS : DEMO_ACCOUNTS,
+  policies: _live ? [] : DEMO_POLICIES,
+  currentUser: _live ? null : DEMO_TEAM[0],
   isLoading: false,
 
   totalBalance: () => get().accounts.reduce((sum, acc) => sum + acc.balance, 0),

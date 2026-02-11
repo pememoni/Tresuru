@@ -107,6 +107,16 @@ export function useTreasury() {
     [live, executeTx]
   );
 
+  // ─── Compute live-mode data ────────────────────────────────────────
+
+  const liveBalance = live && onChainBalance !== undefined ? fromWei(onChainBalance) : 0;
+
+  const liveAccounts = live
+    ? store.accounts.map((a) =>
+        a.id === "acc-treasury" ? { ...a, balance: liveBalance } : a
+      )
+    : store.accounts;
+
   // ─── Return unified interface ───────────────────────────────────────
 
   return {
@@ -115,22 +125,20 @@ export function useTreasury() {
     isSigner: live ? !!callerIsSigner : true,
 
     // State (live overrides demo where available)
-    treasuryBalance: live && onChainBalance !== undefined
-      ? fromWei(onChainBalance)
-      : store.totalBalance(),
+    treasuryBalance: live ? liveBalance : store.totalBalance(),
     transactionCount: live && txCount !== undefined
       ? Number(txCount)
       : store.transactions.length,
     signers: live && signers ? signers : store.team.map((m) => m.address as `0x${string}`),
     requiredApprovals: live && threshold ? Number(threshold) : 2,
 
-    // Store data (always from Zustand for UI rendering)
-    accounts: store.accounts,
+    // Store data (live-aware)
+    accounts: liveAccounts,
     transactions: store.transactions,
     team: store.team,
     policies: store.policies,
     currentUser: store.currentUser,
-    totalBalance: store.totalBalance,
+    totalBalance: live ? () => liveBalance : store.totalBalance,
     pendingTransactions: store.pendingTransactions,
     recentTransactions: store.recentTransactions,
 

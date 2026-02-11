@@ -2,7 +2,7 @@
 
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { formatUSD, shortenAddress } from "@/lib/format";
 import { Wallet, Building, Users, TrendingUp, ExternalLink } from "lucide-react";
 
@@ -21,7 +21,7 @@ const ACCOUNT_COLORS = {
 };
 
 export default function AccountsList() {
-  const { accounts, totalBalance } = useTreasuryStore();
+  const { accounts, totalBalance } = useTreasury();
   const total = totalBalance();
 
   return (

@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { formatUSD, shortenAddress, formatDate } from "@/lib/format";
 import {
   Users,
@@ -24,7 +24,7 @@ import { ROLES, Role } from "@/lib/constants";
 import { PRIMARY_STABLECOIN, tempoTestnet } from "@/lib/chain";
 
 export default function SettingsPage() {
-  const { team, policies, addTeamMember, removeTeamMember } = useTreasuryStore();
+  const { team, policies, addTeamMember, removeTeamMember } = useTreasury();
   const [showAddMember, setShowAddMember] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [newMember, setNewMember] = useState({

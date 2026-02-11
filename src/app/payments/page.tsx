@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { formatUSD, timeAgo, shortenAddress, formatDateTime } from "@/lib/format";
 import NewPaymentModal from "@/components/payments/NewPaymentModal";
 import {
@@ -26,7 +26,7 @@ const TYPE_CONFIG = {
 };
 
 export default function PaymentsPage() {
-  const { transactions } = useTreasuryStore();
+  const { transactions } = useTreasury();
   const [showNewPayment, setShowNewPayment] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");

@@ -3,12 +3,12 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Bell, Search, LogOut, User, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { shortenAddress } from "@/lib/format";
 
 export default function Header() {
   const { ready, authenticated, login, logout, user } = useAuth();
-  const { currentUser, pendingTransactions } = useTreasuryStore();
+  const { currentUser, pendingTransactions } = useTreasury();
   const pendingCount = pendingTransactions().length;
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -54,12 +54,12 @@ export default function Header() {
               </div>
               <div className="text-left hidden sm:block">
                 <p className="text-sm font-medium text-white/80">
-                  {currentUser?.name || user.email?.address || "Connected"}
+                  {user.email?.address || (user.wallet?.address ? shortenAddress(user.wallet.address) : currentUser?.name || "Connected")}
                 </p>
                 <p className="text-[10px] text-white/30 font-mono">
                   {user.wallet?.address
                     ? shortenAddress(user.wallet.address)
-                    : currentUser?.role || ""}
+                    : ""}
                 </p>
               </div>
               <ChevronDown className="w-3 h-3 text-white/25" />

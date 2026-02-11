@@ -2,7 +2,7 @@
 
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { formatUSD, formatCompactUSD } from "@/lib/format";
 import {
   BarChart,
@@ -58,7 +58,7 @@ const DAILY_VOLUME = [
 ];
 
 export default function AnalyticsPage() {
-  const { transactions, accounts, totalBalance } = useTreasuryStore();
+  const { transactions, accounts, totalBalance } = useTreasury();
   const total = totalBalance();
 
   const totalOutflow = MONTHLY_DATA.reduce((s, d) => s + d.outflow, 0);
