@@ -74,6 +74,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (ready && authenticated) {
+      useTreasuryStore.getState().setDemoSession(false);
       router.push("/dashboard");
     }
   }, [ready, authenticated, router]);

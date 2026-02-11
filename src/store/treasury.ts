@@ -365,8 +365,13 @@ export const LIVE_ACCOUNTS: TreasuryAccount[] = [
   },
 ];
 
+const getInitialDemoSession = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem("tresuru_demo") === "true";
+};
+
 export const useTreasuryStore = create<TreasuryStore>((set, get) => ({
-  demoSession: false,
+  demoSession: getInitialDemoSession(),
   team: DEMO_TEAM,
   transactions: DEMO_TRANSACTIONS,
   accounts: DEMO_ACCOUNTS,
@@ -384,7 +389,16 @@ export const useTreasuryStore = create<TreasuryStore>((set, get) => ({
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10),
 
-  setDemoSession: (demo) => set({ demoSession: demo }),
+  setDemoSession: (demo) => {
+    if (typeof window !== "undefined") {
+      if (demo) {
+        sessionStorage.setItem("tresuru_demo", "true");
+      } else {
+        sessionStorage.removeItem("tresuru_demo");
+      }
+    }
+    set({ demoSession: demo });
+  },
 
   setCurrentUser: (user) => set({ currentUser: user }),
 
