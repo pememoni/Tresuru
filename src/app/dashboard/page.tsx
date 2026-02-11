@@ -6,9 +6,12 @@ import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import TreasuryChart from "@/components/dashboard/TreasuryChart";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Shield, Zap, Clock, CheckCircle2 } from "lucide-react";
+import { Shield, Zap, Clock, CheckCircle2, Wifi } from "lucide-react";
+import { isLiveMode } from "@/lib/contracts";
 
 export default function DashboardPage() {
+  const live = isLiveMode();
+
   return (
     <div className="space-y-6 max-w-[1400px]">
       {/* Page Header */}
@@ -20,9 +23,16 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="success" dot>
-            Live on Testnet
-          </Badge>
+          {live ? (
+            <Badge variant="success" dot>
+              <Wifi className="w-3 h-3 mr-1" />
+              Live on Testnet
+            </Badge>
+          ) : (
+            <Badge variant="warning" dot>
+              Demo Mode
+            </Badge>
+          )}
           <Badge variant="info">
             <Zap className="w-3 h-3 mr-1" />
             &lt;$0.001 per tx

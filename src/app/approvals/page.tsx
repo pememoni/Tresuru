@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { formatUSD, timeAgo, shortenAddress } from "@/lib/format";
 import {
   CheckCircle2,
@@ -14,11 +14,12 @@ import {
   AlertTriangle,
   ChevronRight,
   MessageSquare,
+  Wifi,
 } from "lucide-react";
 import { useState } from "react";
 
 export default function ApprovalsPage() {
-  const { transactions, currentUser, approveTransaction, rejectTransaction } = useTreasuryStore();
+  const { transactions, currentUser, approveTransaction, rejectTransaction, isLive, isApproving, isRejecting } = useTreasury();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectComment, setRejectComment] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -31,22 +32,25 @@ export default function ApprovalsPage() {
   const handleApprove = async (txId: string) => {
     if (!currentUser) return;
     setProcessingId(txId);
-    // Simulate blockchain interaction
-    setTimeout(() => {
-      approveTransaction(txId, currentUser.name);
-      setProcessingId(null);
-    }, 2000);
+    try {
+      await approveTransaction(txId);
+    } catch (err) {
+      console.error("Approval failed:", err);
+    }
+    setProcessingId(null);
   };
 
   const handleReject = async (txId: string) => {
     if (!currentUser) return;
     setProcessingId(txId);
-    setTimeout(() => {
-      rejectTransaction(txId, currentUser.name, rejectComment);
-      setProcessingId(null);
-      setRejectingId(null);
-      setRejectComment("");
-    }, 1500);
+    try {
+      await rejectTransaction(txId, rejectComment);
+    } catch (err) {
+      console.error("Rejection failed:", err);
+    }
+    setProcessingId(null);
+    setRejectingId(null);
+    setRejectComment("");
   };
 
   return (
@@ -59,7 +63,13 @@ export default function ApprovalsPage() {
             Review and approve pending treasury transactions
           </p>
         </div>
-        <Badge variant={pendingTxs.length > 0 ? "warning" : "success"} dot>
+        {isLive && (
+            <Badge variant="success" dot>
+              <Wifi className="w-3 h-3 mr-1" />
+              On-Chain
+            </Badge>
+          )}
+          <Badge variant={pendingTxs.length > 0 ? "warning" : "success"} dot>
           {pendingTxs.length} pending approval{pendingTxs.length !== 1 ? "s" : ""}
         </Badge>
       </div>

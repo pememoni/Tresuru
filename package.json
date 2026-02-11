@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "compile": "hardhat compile",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network tempoTestnet",
+    "deploy:local": "hardhat run scripts/deploy.ts --network hardhat"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.13.1",
@@ -23,13 +26,16 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "hardhat": "^3.1.7",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "type": "module"
 }

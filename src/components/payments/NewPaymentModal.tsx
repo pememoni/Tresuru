@@ -2,11 +2,11 @@
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { useTreasuryStore } from "@/store/treasury";
+import { useTreasury } from "@/hooks/useTreasury";
 import { TRANSACTION_CATEGORIES, APPROVAL_THRESHOLDS, TransactionCategory } from "@/lib/constants";
 import { formatUSD } from "@/lib/format";
 import { useState } from "react";
-import { Send, AlertCircle, Shield, FileText } from "lucide-react";
+import { Send, Shield, FileText, Wifi } from "lucide-react";
 
 interface NewPaymentModalProps {
   open: boolean;
@@ -14,7 +14,7 @@ interface NewPaymentModalProps {
 }
 
 export default function NewPaymentModal({ open, onClose }: NewPaymentModalProps) {
-  const { accounts, addTransaction, currentUser } = useTreasuryStore();
+  const { accounts, currentUser, proposeTransaction, isProposing, isLive } = useTreasury();
   const [formData, setFormData] = useState({
     fromAccount: "",
     toAddress: "",
@@ -24,7 +24,6 @@ export default function NewPaymentModal({ open, onClose }: NewPaymentModalProps)
     memo: "",
     description: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const amount = parseFloat(formData.amount) || 0;
 
@@ -41,25 +40,16 @@ export default function NewPaymentModal({ open, onClose }: NewPaymentModalProps)
     e.preventDefault();
     if (!formData.fromAccount || !formData.toAddress || !amount || !formData.category) return;
 
-    setIsSubmitting(true);
-
-    // Simulate transaction creation
-    setTimeout(() => {
-      addTransaction({
-        type: "outbound",
-        status: "pending_approval",
-        from: formData.fromAccount,
+    try {
+      await proposeTransaction({
         to: formData.toAddress,
-        toLabel: formData.toLabel || undefined,
         amount,
-        token: "trUSD",
-        category: formData.category as TransactionCategory,
         memo: formData.memo,
         description: formData.description,
-        createdBy: currentUser?.name || "Unknown",
-        requiredApprovals: threshold.requiredApprovals,
+        category: formData.category,
+        fromAccount: formData.fromAccount,
+        toLabel: formData.toLabel || undefined,
       });
-      setIsSubmitting(false);
       setFormData({
         fromAccount: "",
         toAddress: "",
@@ -70,7 +60,9 @@ export default function NewPaymentModal({ open, onClose }: NewPaymentModalProps)
         description: "",
       });
       onClose();
-    }, 1500);
+    } catch (err) {
+      console.error("Failed to propose transaction:", err);
+    }
   };
 
   return (
@@ -78,10 +70,20 @@ export default function NewPaymentModal({ open, onClose }: NewPaymentModalProps)
       open={open}
       onClose={onClose}
       title="New Payment"
-      subtitle="Create a new outbound trUSD payment"
+      subtitle="Create a new outbound payment"
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Live mode indicator */}
+        {isLive && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+            <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-xs text-emerald-400">
+              Live mode: this will submit a real on-chain transaction
+            </span>
+          </div>
+        )}
+
         {/* From Account */}
         <div>
           <label className="block text-xs font-medium text-white/50 mb-2">From Account</label>
@@ -133,7 +135,7 @@ export default function NewPaymentModal({ open, onClose }: NewPaymentModalProps)
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-white/50 mb-2">
-              Amount (trUSD)
+              Amount (USD)
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-white/30">
@@ -222,10 +224,10 @@ export default function NewPaymentModal({ open, onClose }: NewPaymentModalProps)
           </Button>
           <Button
             type="submit"
-            loading={isSubmitting}
+            loading={isProposing}
             icon={<Send className="w-4 h-4" />}
           >
-            Submit for Approval
+            {isLive ? "Submit On-Chain" : "Submit for Approval"}
           </Button>
         </div>
       </form>
