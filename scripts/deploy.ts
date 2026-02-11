@@ -2,42 +2,130 @@
  * Deploy TresuruTreasury + TresuruUSD to Tempo Testnet
  *
  * Usage:
- *   DEPLOYER_PRIVATE_KEY=0x... npx hardhat run scripts/deploy.ts --network tempoTestnet
+ *   nvm use 22
+ *   DEPLOYER_PRIVATE_KEY=0x... npm run deploy:testnet
  *
- * After deploying, update your .env.local with the printed addresses:
- *   NEXT_PUBLIC_TREASURY_ADDRESS=0x...
- *   NEXT_PUBLIC_TOKEN_ADDRESS=0x...
+ * After deploying, update your .env.local with the printed addresses.
  */
 
-import hre from "hardhat";
-import { parseUnits } from "viem";
+import {
+  createPublicClient,
+  http,
+  parseUnits,
+  encodeFunctionData,
+  encodeDeployData,
+  serializeTransaction,
+  type TransactionSerializableLegacy,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { readFileSync } from "fs";
+
+const TEMPO_TESTNET = {
+  id: 42431,
+  name: "Tempo Testnet",
+  nativeCurrency: { decimals: 18, name: "USD", symbol: "USD" },
+  rpcUrls: { default: { http: ["https://rpc.moderato.tempo.xyz"] } },
+} as const;
+
+const RPC_URL = "https://rpc.moderato.tempo.xyz";
+
+async function sendRawTx(
+  account: ReturnType<typeof privateKeyToAccount>,
+  publicClient: ReturnType<typeof createPublicClient>,
+  tx: { to?: `0x${string}`; data: `0x${string}`; gas: bigint; nonce: number }
+) {
+  const gasPrice = await publicClient.getGasPrice();
+  const txData: TransactionSerializableLegacy = {
+    type: "legacy",
+    chainId: 42431,
+    nonce: tx.nonce,
+    to: tx.to ?? undefined,
+    value: 0n,
+    data: tx.data,
+    gas: tx.gas,
+    gasPrice,
+  };
+  const signed = await account.signTransaction(txData);
+  const hash = await publicClient.sendRawTransaction({ serializedTransaction: signed });
+  return hash;
+}
 
 async function main() {
-  console.log("Deploying to", hre.network.name, "...\n");
+  const key = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!key) {
+    console.error("Set DEPLOYER_PRIVATE_KEY env var");
+    process.exit(1);
+  }
 
-  // 1. Deploy TresuruUSD token
-  const Token = await hre.ethers.getContractFactory("TresuruUSD");
-  const token = await Token.deploy();
-  await token.waitForDeployment();
-  const tokenAddress = await token.getAddress();
-  console.log("TresuruUSD deployed:", tokenAddress);
+  const account = privateKeyToAccount(key as `0x${string}`);
+  console.log("Deployer:", account.address);
 
-  // 2. Get deployer address (will be first signer)
-  const [deployer] = await hre.ethers.getSigners();
-  console.log("Deployer:", deployer.address);
+  const publicClient = createPublicClient({
+    chain: TEMPO_TESTNET,
+    transport: http(RPC_URL),
+  });
 
-  // 3. Deploy TresuruTreasury with deployer as sole initial signer, threshold = 1
-  const Treasury = await hre.ethers.getContractFactory("TresuruTreasury");
-  const treasury = await Treasury.deploy([deployer.address], 1);
-  await treasury.waitForDeployment();
-  const treasuryAddress = await treasury.getAddress();
-  console.log("TresuruTreasury deployed:", treasuryAddress);
+  const balance = await publicClient.getBalance({ address: account.address });
+  console.log("Balance:", balance.toString(), "wei");
 
-  // 4. Fund treasury with 20M trUSD for demo
+  let nonce = Number(
+    await publicClient.getTransactionCount({ address: account.address })
+  );
+  console.log("Nonce:", nonce);
+
+  // Load compiled artifacts
+  const tokenArtifact = JSON.parse(
+    readFileSync("./artifacts/contracts/TresuruUSD.sol/TresuruUSD.json", "utf8")
+  );
+  const treasuryArtifact = JSON.parse(
+    readFileSync("./artifacts/contracts/TresuruTreasury.sol/TresuruTreasury.json", "utf8")
+  );
+
+  // 1. Deploy TresuruUSD
+  console.log("\nDeploying TresuruUSD...");
+  const tokenHash = await sendRawTx(account, publicClient, {
+    data: tokenArtifact.bytecode as `0x${string}`,
+    gas: 3_000_000n,
+    nonce: nonce++,
+  });
+  console.log("  tx:", tokenHash);
+  const tokenReceipt = await publicClient.waitForTransactionReceipt({ hash: tokenHash });
+  const tokenAddress = tokenReceipt.contractAddress!;
+  console.log("  TresuruUSD deployed:", tokenAddress);
+
+  // 2. Deploy TresuruTreasury
+  console.log("\nDeploying TresuruTreasury...");
+  const treasuryDeployData = encodeDeployData({
+    abi: treasuryArtifact.abi,
+    bytecode: treasuryArtifact.bytecode as `0x${string}`,
+    args: [[account.address], 1n],
+  });
+  const treasuryHash = await sendRawTx(account, publicClient, {
+    data: treasuryDeployData,
+    gas: 5_000_000n,
+    nonce: nonce++,
+  });
+  console.log("  tx:", treasuryHash);
+  const treasuryReceipt = await publicClient.waitForTransactionReceipt({ hash: treasuryHash });
+  const treasuryAddress = treasuryReceipt.contractAddress!;
+  console.log("  TresuruTreasury deployed:", treasuryAddress);
+
+  // 3. Fund treasury with 20M trUSD
+  console.log("\nFunding treasury with 20,000,000 trUSD...");
   const fundAmount = parseUnits("20000000", 18);
-  const tx = await token.transfer(treasuryAddress, fundAmount);
-  await tx.wait();
-  console.log("Funded treasury with 20,000,000 trUSD");
+  const transferData = encodeFunctionData({
+    abi: tokenArtifact.abi,
+    functionName: "transfer",
+    args: [treasuryAddress, fundAmount],
+  });
+  const transferHash = await sendRawTx(account, publicClient, {
+    to: tokenAddress,
+    data: transferData,
+    gas: 100_000n,
+    nonce: nonce++,
+  });
+  await publicClient.waitForTransactionReceipt({ hash: transferHash });
+  console.log("  Funded!");
 
   console.log("\n─── Add these to your .env.local ───");
   console.log(`NEXT_PUBLIC_TREASURY_ADDRESS=${treasuryAddress}`);

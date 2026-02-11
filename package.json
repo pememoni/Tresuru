@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "compile": "hardhat compile",
-    "deploy:testnet": "hardhat run scripts/deploy.ts --network tempoTestnet",
-    "deploy:local": "hardhat run scripts/deploy.ts --network hardhat"
+    "deploy:testnet": "npx tsx scripts/deploy.ts"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.13.1",
@@ -35,6 +34,7 @@
     "eslint-config-next": "16.1.6",
     "hardhat": "^3.1.7",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   },
   "type": "module"
